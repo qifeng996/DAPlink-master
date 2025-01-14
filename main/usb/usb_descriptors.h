@@ -1,0 +1,26 @@
+//
+// Created by Wind on 2024/12/13.
+//
+
+#ifndef ESP32DAPLINK_USB_DESCRIPTORS_H
+#define ESP32DAPLINK_USB_DESCRIPTORS_H
+
+
+enum {
+    ITF_NUM_HID = 0,
+    ITF_NUM_MSC,
+    ITF_NUM_CDC,
+    ITF_NUM_CDC_DATA,
+    ITF_NUM_TOTAL
+};
+
+enum {
+    EPNUM_DEFAULT = 0,
+    EPNUM_HID_DATA,
+    EPNUM_MSC,
+    EPNUM_CDC_NOTIF,
+    EPNUM_CDC_DATA,
+};
+
+
+#endif //ESP32DAPLINK_USB_DESCRIPTORS_H

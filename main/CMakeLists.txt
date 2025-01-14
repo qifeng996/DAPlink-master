@@ -1,0 +1,28 @@
+idf_component_register(SRCS "DAPlink-master.c"
+        "daplink/Source/DAP.c "
+        "daplink/Source/DAP_vendor.c"
+        "daplink/Source/JTAG_DP.c "
+        "daplink/Source/SW_DP.c "
+        "daplink/Source/SWD_flash.c "
+        "daplink/Source/SWD_host.c "
+        "daplink/Source/SWD_opt.c "
+        "daplink/Source/error.c "
+        "daplink/algo/STM32_ALGO.c "
+        "daplink/algo/STM32F0xx_OPT.c "
+        "daplink/algo/STM32F10x_OPT.c "
+        "daplink/algo/STM32F3xx_OPT.c "
+        "daplink/algo/STM32F4xx_OPT.c "
+        "daplink/algo/STM32F7xx_OPT.c "
+        "daplink/algo/STM32H7xx.c "
+        "usb/usb_descriptors.c"
+        "usb/hid_task.c"
+        "usb/cdc_task.c"
+        "usb/msc_task.c"
+        "usb/vfs_interface.c"
+        "usb/wifi_task.c"
+        "lcd/lcd.c"
+        "gui/gui.c"
+                    INCLUDE_DIRS "." "usb" "daplink/Include" "lcd/include" "gui/include")
+idf_component_get_property(tusb_lib espressif__tinyusb COMPONENT_LIB)
+cmake_policy(SET CMP0079 NEW)
+target_link_libraries(${tusb_lib} PRIVATE ${COMPONENT_LIB})

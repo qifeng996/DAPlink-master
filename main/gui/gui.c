@@ -9,6 +9,7 @@
 #include "lcd.h"
 #include "esp_lcd_touch_ft5x06.h"
 #include "widgets/lv_demo_widgets.h"
+#include "lcd_config.h"
 
 typedef enum {
     DISP_SMALL,
@@ -202,10 +203,10 @@ void gui_init(){
     const lvgl_port_display_cfg_t disp_cfg = {
             .io_handle = io_handle,
             .panel_handle = panel_handle,
-            .buffer_size = 240 * 320,
+            .buffer_size = LCD_WIDTH * LCD_HEIGTH,
             .double_buffer = true,
-            .hres = 320,
-            .vres = 240,
+            .hres = LCD_HEIGTH,
+            .vres = LCD_WIDTH,
             .monochrome = false,
 #if LVGL_VERSION_MAJOR >= 9
             .color_format = LV_COLOR_FORMAT_RGB565,
@@ -240,8 +241,8 @@ void gui_init(){
 
     /* Initialize touch HW */
     const esp_lcd_touch_config_t tp_cfg = {
-            .x_max = 240,
-            .y_max = 320,
+            .x_max = LCD_WIDTH,
+            .y_max = LCD_HEIGTH,
             .rst_gpio_num = GPIO_NUM_NC,
             .int_gpio_num = GPIO_NUM_NC,
             .levels = {

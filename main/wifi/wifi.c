@@ -13,7 +13,7 @@
 #include "gui.h"
 #include "esp_lvgl_port.h"
 
-const char *TAG = "wifi_task";
+ char *TAG = "wifi_task";
 TaskHandle_t wifi_task_handle = {0};
 void wifi_scan(){
     esp_wifi_scan_start(NULL, true);

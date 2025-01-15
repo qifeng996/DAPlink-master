@@ -71,41 +71,4 @@ static void ip_event_handler(void* arg, esp_event_base_t event_base,
     }
 
 }
-esp_err_t wifi_init(){
-    ESP_ERROR_CHECK(esp_netif_init());
-    ESP_ERROR_CHECK(esp_event_loop_create_default());
-    esp_netif_create_default_wifi_sta();
-    wifi_init_config_t wifi_init_config = WIFI_INIT_CONFIG_DEFAULT();
-    ESP_ERROR_CHECK(esp_wifi_init(&wifi_init_config));
-    ESP_ERROR_CHECK(esp_event_handler_instance_register(WIFI_EVENT,
-                                                        ESP_EVENT_ANY_ID,
-                                                        &wifi_event_handler,
-                                                        NULL,
-                                                        NULL));
-    ESP_ERROR_CHECK(esp_event_handler_instance_register(IP_EVENT,
-                                                        ESP_EVENT_ANY_ID,
-                                                        &ip_event_handler,
-                                                        NULL,
-                                                        NULL));
-    wifi_config_t wifiConfig = {
-//            .ap = {
-//                    .ssid = "DAPLink_Master",
-//                    .ssid_len = strlen("DAPLink_Master"),
-//                    .channel = 5,
-//                    .password = "password",
-//                    .max_connection = 1,
-//                    .authmode = WIFI_AUTH_WPA2_PSK,
-//                    .pmf_cfg = {
-//                            .required = true,
-//                    },
-//            },
-                .sta = {
-                        .ssid = "DAPLink_Master",
-                        .password = "password",
-                }
-    };
-    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
-    ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA,&wifiConfig));
-    ESP_ERROR_CHECK(esp_wifi_start());
-    return ESP_OK;
-}
+

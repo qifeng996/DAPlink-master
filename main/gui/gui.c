@@ -3,24 +3,200 @@
 //
 
 #include <driver/i2c.h>
+#include <esp_log.h>
 #include "gui.h"
 #include "esp_lvgl_port.h"
 #include "lcd.h"
 #include "esp_lcd_touch_ft5x06.h"
 #include "widgets/lv_demo_widgets.h"
 
+typedef enum {
+    DISP_SMALL,
+    DISP_MEDIUM,
+    DISP_LARGE,
+} disp_size_t;
 static lv_indev_t *lvgl_touch_indev = NULL;
 static lv_disp_t * disp_handle;
+static disp_size_t disp_size;
+static const lv_font_t * font_large;
+static const lv_font_t * font_normal;
+static lv_obj_t * tv;
+static lv_obj_t * calendar;
+static lv_style_t style_text_muted;
+static lv_style_t style_title;
+static lv_style_t style_icon;
+static lv_style_t style_bullet;
+static lv_style_t font_qingniao;
+lv_obj_t * list;
 TaskHandle_t gui_task_handle = {0};
-void gui_task_entry(void *arg){
-    while(1){
-        uint32_t task_delay_ms = lv_timer_handler();
-        vTaskDelay(pdMS_TO_TICKS(1));
+lv_obj_t * create_wifi_item(lv_obj_t * parent, const void * img_src, const char * name, const char * category)
+{
+    static int32_t grid_col_dsc[] = {LV_GRID_CONTENT, 5, LV_GRID_FR(1), LV_GRID_FR(1), LV_GRID_TEMPLATE_LAST};
+    static int32_t grid_row_dsc[] = {LV_GRID_FR(1), LV_GRID_FR(1), LV_GRID_TEMPLATE_LAST};
+    lv_obj_t * cont = lv_obj_create(parent);
+    lv_obj_remove_style_all(cont);
+    lv_obj_set_size(cont, LV_PCT(100), LV_SIZE_CONTENT);
+    lv_obj_set_grid_dsc_array(cont, grid_col_dsc, grid_row_dsc);
+
+    lv_obj_t * img = lv_image_create(cont);
+    lv_image_set_src(img, img_src);
+    lv_obj_set_grid_cell(img, LV_GRID_ALIGN_START, 0, 1, LV_GRID_ALIGN_START, 0, 2);
+
+    lv_obj_t * label;
+    label = lv_label_create(cont);
+    lv_label_set_text(label, name);
+    lv_obj_set_grid_cell(label, LV_GRID_ALIGN_START, 2, 1, LV_GRID_ALIGN_END, 0, 1);
+
+    label = lv_label_create(cont);
+//    lv_obj_add_style(label, &font_qingniao, 0);
+    lv_obj_add_style(label, &style_text_muted, 0);
+    lv_label_set_text(label, category);
+    lv_obj_set_grid_cell(label, LV_GRID_ALIGN_START, 2, 1, LV_GRID_ALIGN_START, 1, 1);
+
+    return cont;
+}
+void add_wifi_item_cb(lv_event_t * e){
+    if (lv_event_get_code(e)==(lv_event_code_t)ADD_WIFI_ITEM){
+        add_wifi_item_config_t *msg = lv_event_get_param(e);
+        LV_IMG_DECLARE(connect)
+        if (lvgl_port_lock(0)) {
+            create_wifi_item(lv_event_get_target_obj(e), &connect, "SN:", msg->ssid);
+            lvgl_port_unlock();
+        }
+
     }
 }
+void lv_gui_widgets(void)
+{
+    if(LV_HOR_RES <= 320) disp_size = DISP_SMALL;
+    else if(LV_HOR_RES < 720) disp_size = DISP_MEDIUM;
+    else disp_size = DISP_LARGE;
 
+    font_large = LV_FONT_DEFAULT;
+    font_normal = LV_FONT_DEFAULT;
+
+    int32_t tab_h;
+    if(disp_size == DISP_LARGE) {
+        tab_h = 70;
+#if LV_FONT_MONTSERRAT_24
+        font_large     = &lv_font_montserrat_24;
+#else
+        LV_LOG_WARN("LV_FONT_MONTSERRAT_24 is not enabled for the widgets demo. Using LV_FONT_DEFAULT instead.");
+#endif
+#if LV_FONT_MONTSERRAT_16
+        font_normal    = &lv_font_montserrat_16;
+#else
+        LV_LOG_WARN("LV_FONT_MONTSERRAT_16 is not enabled for the widgets demo. Using LV_FONT_DEFAULT instead.");
+#endif
+    }
+    else if(disp_size == DISP_MEDIUM) {
+        tab_h = 45;
+#if LV_FONT_MONTSERRAT_20
+        font_large     = &lv_font_montserrat_20;
+#else
+        LV_LOG_WARN("LV_FONT_MONTSERRAT_20 is not enabled for the widgets demo. Using LV_FONT_DEFAULT instead.");
+#endif
+#if LV_FONT_MONTSERRAT_14
+        font_normal    = &lv_font_montserrat_14;
+#else
+        LV_LOG_WARN("LV_FONT_MONTSERRAT_14 is not enabled for the widgets demo. Using LV_FONT_DEFAULT instead.");
+#endif
+    }
+    else {   /* disp_size == DISP_SMALL */
+        tab_h = 45;
+#if LV_FONT_MONTSERRAT_18
+        font_large     = &lv_font_montserrat_18;
+#else
+        LV_LOG_WARN("LV_FONT_MONTSERRAT_18 is not enabled for the widgets demo. Using LV_FONT_DEFAULT instead.");
+#endif
+#if LV_FONT_MONTSERRAT_12
+        font_normal    = &lv_font_montserrat_12;
+#else
+        LV_LOG_WARN("LV_FONT_MONTSERRAT_12 is not enabled for the widgets demo. Using LV_FONT_DEFAULT instead.");
+#endif
+    }
+
+#if LV_USE_THEME_DEFAULT
+    lv_theme_default_init(NULL, lv_palette_main(LV_PALETTE_BLUE), lv_palette_main(LV_PALETTE_RED), LV_THEME_DEFAULT_DARK,
+                          font_normal);
+#endif
+
+    lv_style_init(&style_text_muted);
+    lv_style_set_text_opa(&style_text_muted, LV_OPA_50);
+
+    lv_style_init(&style_title);
+    lv_style_set_text_font(&style_title, font_large);
+
+    lv_style_init(&style_icon);
+    lv_style_set_text_color(&style_icon, lv_theme_get_color_primary(NULL));
+    lv_style_set_text_font(&style_icon, font_large);
+
+    lv_style_init(&style_bullet);
+    lv_style_set_border_width(&style_bullet, 0);
+    lv_style_set_radius(&style_bullet, LV_RADIUS_CIRCLE);
+
+//    lv_font_t *font = lv_freetype_font_create("/fonts/font.ttf",LV_FREETYPE_FONT_RENDER_MODE_BITMAP,14,LV_FREETYPE_FONT_STYLE_NORMAL);
+//
+//    lv_style_init(&font_qingniao);
+//    lv_style_set_text_font(&font_qingniao,font);
+    tv = lv_tabview_create(lv_screen_active());
+    lv_tabview_set_tab_bar_size(tv, tab_h);
+
+    lv_obj_set_style_text_font(lv_screen_active(), font_normal, 0);
+//
+    lv_obj_t * t1 = lv_tabview_add_tab(tv, "WIFI");
+    lv_obj_t * t2 = lv_tabview_add_tab(tv, "FILE");
+    lv_obj_t * t3 = lv_tabview_add_tab(tv, "COM");
+
+    if(disp_size == DISP_LARGE) {
+        lv_obj_t * tab_bar = lv_tabview_get_tab_bar(tv);
+        lv_obj_set_style_pad_left(tab_bar, LV_HOR_RES / 2, 0);
+        lv_obj_t * logo = lv_image_create(tab_bar);
+        lv_obj_add_flag(logo, LV_OBJ_FLAG_IGNORE_LAYOUT);
+        LV_IMAGE_DECLARE(img_lvgl_logo);
+        lv_image_set_src(logo, &img_lvgl_logo);
+        lv_obj_align(logo, LV_ALIGN_LEFT_MID, -LV_HOR_RES / 2 + 25, 0);
+
+        lv_obj_t * label = lv_label_create(tab_bar);
+        lv_obj_add_style(label, &style_title, 0);
+        lv_obj_add_flag(label, LV_OBJ_FLAG_IGNORE_LAYOUT);
+        lv_label_set_text_fmt(label, "LVGL v%d.%d.%d", lv_version_major(), lv_version_minor(), lv_version_patch());
+        lv_obj_align_to(label, logo, LV_ALIGN_OUT_RIGHT_TOP, 10, 0);
+
+        label = lv_label_create(tab_bar);
+        lv_label_set_text(label, "Widgets demo");
+        lv_obj_add_flag(label, LV_OBJ_FLAG_IGNORE_LAYOUT);
+        lv_obj_add_style(label, &style_text_muted, 0);
+        lv_obj_align_to(label, logo, LV_ALIGN_OUT_RIGHT_BOTTOM, 10, 0);
+    }
+
+
+    lv_obj_set_flex_flow(t1, LV_FLEX_FLOW_ROW_WRAP);
+
+
+    list = lv_obj_create(t1);
+    if(disp_size == DISP_SMALL) {
+        lv_obj_add_flag(list, LV_OBJ_FLAG_FLEX_IN_NEW_TRACK);
+        lv_obj_set_height(list, LV_PCT(100));
+    }
+    else {
+        lv_obj_set_height(list, LV_PCT(100));
+        lv_obj_set_style_max_height(list, 300, 0);
+    }
+
+    lv_obj_set_flex_flow(list, LV_FLEX_FLOW_COLUMN);
+    lv_obj_set_flex_grow(list, 1);
+    lv_obj_add_flag(list, LV_OBJ_FLAG_FLEX_IN_NEW_TRACK);
+
+    lv_obj_t *title = lv_label_create(list);
+    lv_label_set_text(title, "Top products");
+    lv_obj_add_style(title, &style_title, 0);
+    lv_obj_add_event_cb(list,add_wifi_item_cb,ADD_WIFI_ITEM,NULL);
+//    color_changer_create(tv);
+}
 void gui_init(){
-    const lvgl_port_cfg_t lvgl_cfg = ESP_LVGL_PORT_INIT_CONFIG();
+    lvgl_port_cfg_t lvgl_cfg = ESP_LVGL_PORT_INIT_CONFIG();
+    lvgl_cfg.task_stack = 30000;
     lvgl_port_init(&lvgl_cfg);
 
     const lvgl_port_display_cfg_t disp_cfg = {
@@ -91,11 +267,10 @@ void gui_init(){
     lvgl_touch_indev = lvgl_port_add_touch(&touch_cfg);
 
     lv_init();
-
+//    lv_freetype_init(2);
     if (lvgl_port_lock(0)) {
-        lv_demo_widgets();
+        lv_gui_widgets();
 //        example_lvgl_demo_ui(disp_handle);
         lvgl_port_unlock();
     }
-    xTaskCreate(gui_task_entry,"gui_task",8192,NULL, 1, &gui_task_handle);
 }

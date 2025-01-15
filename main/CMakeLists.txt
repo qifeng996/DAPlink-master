@@ -22,7 +22,17 @@ idf_component_register(SRCS "DAPlink-master.c"
         "usb/wifi_task.c"
         "lcd/lcd.c"
         "gui/gui.c"
-                    INCLUDE_DIRS "." "usb" "daplink/Include" "lcd/include" "gui/include")
+        "wifi/wifi.c"
+                    INCLUDE_DIRS "." "usb" "daplink/Include" "lcd/include" "gui/include" "wifi/include")
 idf_component_get_property(tusb_lib espressif__tinyusb COMPONENT_LIB)
 cmake_policy(SET CMP0079 NEW)
 target_link_libraries(${tusb_lib} PRIVATE ${COMPONENT_LIB})
+
+lvgl_port_create_c_image("gui/images/connect.png" "gui/images/" "ARGB8888" "NONE")
+lvgl_port_add_images(${COMPONENT_LIB} "gui/images/")
+
+set_source_files_properties(
+        PROPERTIES COMPILE_OPTIONS
+        "-DLV_LVGL_H_INCLUDE_SIMPLE;-Wno-format;"
+)
+#spiffs_create_partition_image(fonts ./gui/fonts FLASH_IN_PROJECT)

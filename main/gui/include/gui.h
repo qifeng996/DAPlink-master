@@ -7,6 +7,8 @@
 #include "lvgl.h"
 #include "gui_event.h"
 
-
+typedef struct{
+    bool connect;
+} wifi_info;
 void gui_init();
 #endif //DAPLINK_MASTER_GUI_H

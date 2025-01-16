@@ -22,7 +22,7 @@
 #include "tusb_config.h"
 #include "tusb.h"
 #include "DAP.h"
-#include "wifi_task.h"
+#include "wifi.h"
 
 //#include "cdc_task.h"
 //#include "DAP.h"
@@ -43,18 +43,19 @@ TaskHandle_t hid_task_handle = {0};
 void hid_task(void *params) {
     (void) params;
     while (1) {
-        ESP_LOGI(TAG, "GetData");
 
         if (ulTaskNotifyTake(pdTRUE, portMAX_DELAY)) {
-            if (dealing_data) {
 //                DAP_ProcessCommand(MYUSB_Request, MYUSB_Response);
 //                tud_hid_report(0, MYUSB_Response, 64);
 //                dealing_data = 0;
-                struct pbuf *ptr = pbuf_alloc(PBUF_TRANSPORT, sizeof(MYUSB_Request), PBUF_POOL);
-                pbuf_take(ptr, MYUSB_Request, sizeof(MYUSB_Request));
-                udp_send(pcb, ptr);
+            ESP_LOGI(TAG, "GetData");
 
-            }
+            struct pbuf *ptr = pbuf_alloc(PBUF_TRANSPORT, sizeof(MYUSB_Request), PBUF_POOL);
+            pbuf_take(ptr, MYUSB_Request, sizeof(MYUSB_Request));
+            udp_send(pcb, ptr);
+            pbuf_free(ptr);
+            ESP_LOGI(TAG, "GetDat1");
+            dealing_data = 0;
         }
 //         if (tud_vendor_available())
 //         {
@@ -66,7 +67,7 @@ void hid_task(void *params) {
 }
 
 void dap_hid_init() {
-    xTaskCreate(hid_task, "hid", 4096, NULL, configMAX_PRIORITIES-1, &hid_task_handle);
+    xTaskCreate(hid_task, "hid", 4096, NULL, 1, &hid_task_handle);
 }
 
 #if CFG_TUD_HID
@@ -100,6 +101,7 @@ void tud_hid_set_report_cb(uint8_t instance, uint8_t report_id, hid_report_type_
         return; // Discard packet when buffer is full
     memcpy(MYUSB_Request, buffer, bufsize);
     dealing_data = 1;
+    ESP_LOGI("HID","get report");
     xTaskNotifyGive(hid_task_handle);
     // echo back anything we received from host
     // tud_hid_report(0, buffer, bufsize);

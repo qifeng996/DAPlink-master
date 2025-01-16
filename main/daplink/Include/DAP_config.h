@@ -172,18 +172,18 @@ static inline uint8_t DAP_GetSerNumString(char *str)
 
 /* Private defines -----------------------------------------------------------*/
 // ATTENTION: DO NOT USE RTC GPIO16
-#define PIN_SWDIO 9
-#define PIN_SWCLK 10
+#define PIN_SWDIO 41
+#define PIN_SWCLK 42
 
-#define PIN_TDO 14
-#define PIN_TDI 15
+#define PIN_TDO 39
+#define PIN_TDI 40
 #define PIN_nTRST 16 // optional
-#define PIN_nRESET 17
+#define PIN_nRESET 38
 
 // LED_BUILTIN
-#define PIN_LED_CONNECTED 48
+#define PIN_LED_CONNECTED 46
 // LED_BUILTIN
-#define PIN_LED_RUNNING 15
+#define PIN_LED_RUNNING 45
 // Target Running LED           Not available
 
 //**************************************************************************************************

@@ -1,4 +1,6 @@
-idf_component_register(SRCS "DAPlink-master.c"
+idf_component_register(
+        SRCS
+        "DAPlink-master.c"
         "daplink/Source/DAP.c "
         "daplink/Source/DAP_vendor.c"
         "daplink/Source/JTAG_DP.c "
@@ -19,16 +21,30 @@ idf_component_register(SRCS "DAPlink-master.c"
         "usb/cdc_task.c"
         "usb/msc_task.c"
         "usb/vfs_interface.c"
-        "usb/wifi_task.c"
+        "usb/usb.c"
         "lcd/lcd.c"
         "gui/gui.c"
+        "gui/welcome_ui.c"
         "wifi/wifi.c"
-                    INCLUDE_DIRS "." "usb" "daplink/Include" "lcd/include" "gui/include" "wifi/include")
+        "vfs/vfs.c"
+                    INCLUDE_DIRS
+        "."
+        "daplink/Include"
+        "lcd/include"
+        "gui/include"
+        "wifi/include"
+        "usb/include"
+        "vfs/include"
+)
 idf_component_get_property(tusb_lib espressif__tinyusb COMPONENT_LIB)
 cmake_policy(SET CMP0079 NEW)
 target_link_libraries(${tusb_lib} PRIVATE ${COMPONENT_LIB})
 
 lvgl_port_create_c_image("gui/images/connect.png" "gui/images/" "ARGB8888" "NONE")
+lvgl_port_create_c_image("gui/images/disconnect.png" "gui/images/" "ARGB8888" "NONE")
+
+lvgl_port_create_c_image("gui/images/esp_logo.png" "gui/images/" "ARGB8888" "NONE")
+lvgl_port_create_c_image("gui/images/esp_text.png" "gui/images/" "ARGB8888" "NONE")
 lvgl_port_add_images(${COMPONENT_LIB} "gui/images/")
 
 set_source_files_properties(

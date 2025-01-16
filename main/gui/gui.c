@@ -10,7 +10,7 @@
 #include "esp_lcd_touch_ft5x06.h"
 #include "widgets/lv_demo_widgets.h"
 #include "lcd_config.h"
-
+#include "esp_wifi.h"
 typedef enum {
     DISP_SMALL,
     DISP_MEDIUM,
@@ -30,6 +30,37 @@ static lv_style_t style_bullet;
 static lv_style_t font_qingniao;
 lv_obj_t * list;
 TaskHandle_t gui_task_handle = {0};
+
+
+
+void clicked_wifi_item_cb(lv_event_t * e){
+    if (lv_event_get_code(e)==LV_EVENT_CLICKED){
+        if (lvgl_port_lock(0)) {
+            LV_IMG_DECLARE(connect)
+            LV_IMG_DECLARE(disconnect)
+            lv_obj_t *obj = lv_event_get_target_obj(e);
+            wifi_info *info = lv_obj_get_user_data(obj);
+            if (info->connect){
+                info->connect = false;
+                lv_image_set_src(lv_obj_get_child(obj,0), &disconnect);
+            }else{
+                lv_obj_t *parent = lv_obj_get_parent(obj);
+                uint32_t count = lv_obj_get_child_count(parent);
+                for (int i = 0; i < count; ++i) {
+                    lv_obj_t *listItem = lv_obj_get_child(parent,i);
+                    wifi_info *wifiInfo = lv_obj_get_user_data(listItem);
+                    wifiInfo->connect = false;
+                    lv_image_set_src(lv_obj_get_child(listItem,0), &disconnect);
+                }
+                info->connect = true;
+
+                lv_image_set_src(lv_obj_get_child(obj,0), &connect);
+
+            }
+            lvgl_port_unlock();
+        }
+    }
+}
 lv_obj_t * create_wifi_item(lv_obj_t * parent, const void * img_src, const char * name, const char * category)
 {
     static int32_t grid_col_dsc[] = {LV_GRID_CONTENT, 5, LV_GRID_FR(1), LV_GRID_FR(1), LV_GRID_TEMPLATE_LAST};
@@ -38,6 +69,9 @@ lv_obj_t * create_wifi_item(lv_obj_t * parent, const void * img_src, const char 
     lv_obj_remove_style_all(cont);
     lv_obj_set_size(cont, LV_PCT(100), LV_SIZE_CONTENT);
     lv_obj_set_grid_dsc_array(cont, grid_col_dsc, grid_row_dsc);
+    wifi_info wifiInfo = {0};
+    lv_obj_set_user_data(cont,&wifiInfo);
+    lv_obj_add_event_cb(cont,clicked_wifi_item_cb,LV_EVENT_CLICKED,NULL);
 
     lv_obj_t * img = lv_image_create(cont);
     lv_image_set_src(img, img_src);
@@ -59,14 +93,19 @@ lv_obj_t * create_wifi_item(lv_obj_t * parent, const void * img_src, const char 
 void add_wifi_item_cb(lv_event_t * e){
     if (lv_event_get_code(e)==(lv_event_code_t)ADD_WIFI_ITEM){
         add_wifi_item_config_t *msg = lv_event_get_param(e);
-        LV_IMG_DECLARE(connect)
+        LV_IMG_DECLARE(disconnect)
         if (lvgl_port_lock(0)) {
-            create_wifi_item(lv_event_get_target_obj(e), &connect, "SN:", msg->ssid);
+            create_wifi_item(lv_event_get_target_obj(e), &disconnect, "SN:", msg->ssid);
             lvgl_port_unlock();
         }
 
     }
 }
+
+
+
+
+
 void lv_gui_widgets(void)
 {
     if(LV_HOR_RES <= 320) disp_size = DISP_SMALL;
@@ -104,7 +143,7 @@ void lv_gui_widgets(void)
 #endif
     }
     else {   /* disp_size == DISP_SMALL */
-        tab_h = 45;
+        tab_h = 30;
 #if LV_FONT_MONTSERRAT_18
         font_large     = &lv_font_montserrat_18;
 #else
@@ -148,7 +187,11 @@ void lv_gui_widgets(void)
     lv_obj_t * t1 = lv_tabview_add_tab(tv, "WIFI");
     lv_obj_t * t2 = lv_tabview_add_tab(tv, "FILE");
     lv_obj_t * t3 = lv_tabview_add_tab(tv, "COM");
-
+    lv_obj_t * t4 = lv_tabview_add_tab(tv, "SETTING");
+    lv_obj_set_flex_flow(t1, LV_FLEX_FLOW_ROW_WRAP);
+    lv_obj_set_flex_flow(t2, LV_FLEX_FLOW_ROW_WRAP);
+    lv_obj_set_flex_flow(t3, LV_FLEX_FLOW_ROW_WRAP);
+    lv_obj_set_flex_flow(t4, LV_FLEX_FLOW_ROW_WRAP);
     if(disp_size == DISP_LARGE) {
         lv_obj_t * tab_bar = lv_tabview_get_tab_bar(tv);
         lv_obj_set_style_pad_left(tab_bar, LV_HOR_RES / 2, 0);
@@ -172,8 +215,6 @@ void lv_gui_widgets(void)
     }
 
 
-    lv_obj_set_flex_flow(t1, LV_FLEX_FLOW_ROW_WRAP);
-
 
     list = lv_obj_create(t1);
     if(disp_size == DISP_SMALL) {
@@ -190,9 +231,28 @@ void lv_gui_widgets(void)
     lv_obj_add_flag(list, LV_OBJ_FLAG_FLEX_IN_NEW_TRACK);
 
     lv_obj_t *title = lv_label_create(list);
-    lv_label_set_text(title, "Top products");
+    lv_label_set_text(title, "Scanning.....");
     lv_obj_add_style(title, &style_title, 0);
+    lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 0);
     lv_obj_add_event_cb(list,add_wifi_item_cb,ADD_WIFI_ITEM,NULL);
+    lv_obj_t *file = lv_obj_create(t2);
+    lv_obj_add_flag(file, LV_OBJ_FLAG_FLEX_IN_NEW_TRACK);
+    lv_obj_set_height(file, LV_PCT(100));
+    lv_obj_set_flex_flow(file, LV_FLEX_FLOW_COLUMN);
+    lv_obj_set_flex_grow(file, 1);
+    lv_obj_add_flag(file, LV_OBJ_FLAG_FLEX_IN_NEW_TRACK);
+    lv_obj_t *com = lv_obj_create(t3);
+    lv_obj_add_flag(com, LV_OBJ_FLAG_FLEX_IN_NEW_TRACK);
+    lv_obj_set_height(com, LV_PCT(100));
+    lv_obj_set_flex_flow(com, LV_FLEX_FLOW_COLUMN);
+    lv_obj_set_flex_grow(com, 1);
+    lv_obj_add_flag(com, LV_OBJ_FLAG_FLEX_IN_NEW_TRACK);
+    lv_obj_t *setting = lv_obj_create(t4);
+    lv_obj_add_flag(setting, LV_OBJ_FLAG_FLEX_IN_NEW_TRACK);
+    lv_obj_set_height(setting, LV_PCT(100));
+    lv_obj_set_flex_flow(setting, LV_FLEX_FLOW_COLUMN);
+    lv_obj_set_flex_grow(setting, 1);
+    lv_obj_add_flag(setting, LV_OBJ_FLAG_FLEX_IN_NEW_TRACK);
 //    color_changer_create(tv);
 }
 void gui_init(){
@@ -268,10 +328,15 @@ void gui_init(){
     lvgl_touch_indev = lvgl_port_add_touch(&touch_cfg);
 
     lv_init();
+    if (lvgl_port_lock(0)) {
+        extern void welcome_ui();
+        welcome_ui();
+        lvgl_port_unlock();
+    }
+    vTaskDelay(pdMS_TO_TICKS(4000));
 //    lv_freetype_init(2);
     if (lvgl_port_lock(0)) {
         lv_gui_widgets();
-//        example_lvgl_demo_ui(disp_handle);
         lvgl_port_unlock();
     }
 }

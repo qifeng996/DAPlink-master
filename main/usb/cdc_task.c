@@ -97,9 +97,9 @@ void dap_cdc_init() {
     };
     uart_queue = xQueueCreate(2, sizeof(uart_event_t));
     uart_param_config(UART_NUM, &uart_config);
-    ESP_ERROR_CHECK(uart_driver_install(UART_NUM, 512, 512, 2, &uart_queue, ESP_INTR_FLAG_LEVEL1));
-    xTaskCreate(cdc_rx_task, "cdc_rx", 4096, NULL, 1, &cdc_task_handle);
-    xTaskCreate(cdc_tx_task, "cdc_tx", 4096, NULL, 1, NULL);
+    ESP_ERROR_CHECK(uart_driver_install(UART_NUM, 512, 512, 2, &uart_queue, ESP_INTR_FLAG_LEVEL3));
+    xTaskCreate(cdc_rx_task, "cdc_rx", 4096, NULL, 3, &cdc_task_handle);
+    xTaskCreate(cdc_tx_task, "cdc_tx", 4096, NULL, 3, NULL);
 
 }
 

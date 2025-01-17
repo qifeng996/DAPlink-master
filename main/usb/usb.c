@@ -22,6 +22,7 @@ static void usb_phy_init(void) {
 static void tusb_device_task(void *arg) {
     while (1) {
         tud_task();
+        vTaskDelay(pdMS_TO_TICKS(1));
     }
 }
 

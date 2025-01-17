@@ -14,11 +14,12 @@ void vfs_init(){
             .max_files = 20,
             .allocation_unit_size = 16 * 1024
     };
-    sdmmc_card_t *card = NULL;
     const char mount_point[] = "/disk";
 
 
 #if USE_SDMMC
+    sdmmc_card_t *card = NULL;
+
     // By default, eMMC frequency is initialized to SDMMC_FREQ_DEFAULT (20MHz)
     // For setting a specific frequency, use host.max_freq_khz (range 400kHz - 52MHz for SDMMC)
     // Example: for fixed frequency of 10MHz, use host.max_freq_khz = 10000;
@@ -49,6 +50,6 @@ void vfs_init(){
     esp_vfs_fat_sdmmc_mount(mount_point, &host, &slot_config, &mount_config, &card);
 #else
     wl_handle_t wl_handle_1 = WL_INVALID_HANDLE;
-    esp_vfs_fat_spiflash_mount(mount_point, "storage", &mount_config, &wl_handle_1);
+    esp_vfs_fat_spiflash_mount_rw_wl(mount_point, "storage", &mount_config, &wl_handle_1);
 #endif
 }

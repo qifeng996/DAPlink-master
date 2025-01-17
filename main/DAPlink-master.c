@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include <nvs_flash.h>
 #include <esp_spiffs.h>
+#include <lwip/init.h>
+#include <lwip/udp.h>
+
 #include "lcd.h"
 #include "gui.h"
 #include "wifi.h"
@@ -29,5 +32,7 @@ void app_main(void)
     gui_init();
     wifi_init();
     vfs_init();
+    udp_init();
     usb_init();
+
 }

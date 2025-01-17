@@ -48,7 +48,6 @@ static void ip_event_handler(void* arg, esp_event_base_t event_base,
         case IP_EVENT_STA_GOT_IP:
 
             ESP_LOGI(TAG, "Get IP: " IPSTR, IP2STR(&event->ip_info.ip));
-            udp_init();
             pcb = udp_new();
             if (udp_bind(pcb, IP_ADDR_ANY, 8090) != ERR_OK) {
                 ESP_LOGE(TAG, "UDP bind failed");

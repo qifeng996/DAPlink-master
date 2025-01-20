@@ -102,10 +102,6 @@ void add_wifi_item_cb(lv_event_t * e){
     }
 }
 
-
-
-
-
 void lv_gui_widgets(void)
 {
     if(LV_HOR_RES <= 320) disp_size = DISP_SMALL;
@@ -192,49 +188,19 @@ void lv_gui_widgets(void)
     lv_obj_set_flex_flow(t2, LV_FLEX_FLOW_ROW_WRAP);
     lv_obj_set_flex_flow(t3, LV_FLEX_FLOW_ROW_WRAP);
     lv_obj_set_flex_flow(t4, LV_FLEX_FLOW_ROW_WRAP);
-    if(disp_size == DISP_LARGE) {
-        lv_obj_t * tab_bar = lv_tabview_get_tab_bar(tv);
-        lv_obj_set_style_pad_left(tab_bar, LV_HOR_RES / 2, 0);
-        lv_obj_t * logo = lv_image_create(tab_bar);
-        lv_obj_add_flag(logo, LV_OBJ_FLAG_IGNORE_LAYOUT);
-        LV_IMAGE_DECLARE(img_lvgl_logo);
-        lv_image_set_src(logo, &img_lvgl_logo);
-        lv_obj_align(logo, LV_ALIGN_LEFT_MID, -LV_HOR_RES / 2 + 25, 0);
-
-        lv_obj_t * label = lv_label_create(tab_bar);
-        lv_obj_add_style(label, &style_title, 0);
-        lv_obj_add_flag(label, LV_OBJ_FLAG_IGNORE_LAYOUT);
-        lv_label_set_text_fmt(label, "LVGL v%d.%d.%d", lv_version_major(), lv_version_minor(), lv_version_patch());
-        lv_obj_align_to(label, logo, LV_ALIGN_OUT_RIGHT_TOP, 10, 0);
-
-        label = lv_label_create(tab_bar);
-        lv_label_set_text(label, "Widgets demo");
-        lv_obj_add_flag(label, LV_OBJ_FLAG_IGNORE_LAYOUT);
-        lv_obj_add_style(label, &style_text_muted, 0);
-        lv_obj_align_to(label, logo, LV_ALIGN_OUT_RIGHT_BOTTOM, 10, 0);
-    }
-
-
-
     list = lv_obj_create(t1);
-    if(disp_size == DISP_SMALL) {
-        lv_obj_add_flag(list, LV_OBJ_FLAG_FLEX_IN_NEW_TRACK);
-        lv_obj_set_height(list, LV_PCT(100));
-    }
-    else {
-        lv_obj_set_height(list, LV_PCT(100));
-        lv_obj_set_style_max_height(list, 300, 0);
-    }
+    lv_obj_set_height(list, LV_PCT(100));
 
     lv_obj_set_flex_flow(list, LV_FLEX_FLOW_COLUMN);
     lv_obj_set_flex_grow(list, 1);
     lv_obj_add_flag(list, LV_OBJ_FLAG_FLEX_IN_NEW_TRACK);
-
+    lv_obj_set_scrollbar_mode(list,LV_SCROLLBAR_MODE_OFF);
     lv_obj_t *title = lv_label_create(list);
     lv_label_set_text(title, "Scanning.....");
     lv_obj_add_style(title, &style_title, 0);
-    lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 0);
+    lv_obj_align(title, LV_ALIGN_TOP_MID, 0, -40);
     lv_obj_add_event_cb(list,add_wifi_item_cb,ADD_WIFI_ITEM,NULL);
+
     lv_obj_t *file = lv_obj_create(t2);
     lv_obj_add_flag(file, LV_OBJ_FLAG_FLEX_IN_NEW_TRACK);
     lv_obj_set_height(file, LV_PCT(100));
@@ -290,10 +256,10 @@ void gui_init(){
 
     const i2c_config_t i2c_conf = {
             .mode = I2C_MODE_MASTER,
-            .sda_io_num = 11,
-            .sda_pullup_en = GPIO_PULLUP_ENABLE,
-            .scl_io_num = 12,
-            .scl_pullup_en = GPIO_PULLUP_ENABLE,
+            .sda_io_num = TOUCH_SDA,
+            .sda_pullup_en = GPIO_PULLUP_DISABLE,
+            .scl_io_num = TOUCH_CLK,
+            .scl_pullup_en = GPIO_PULLUP_DISABLE,
             .master.clk_speed = 400000
     };
     i2c_param_config(I2C_NUM_0, &i2c_conf);

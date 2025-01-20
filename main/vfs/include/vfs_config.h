@@ -7,7 +7,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#define USE_SDMMC 1
+#define USE_SDMMC 0
 
 #if USE_SDMMC
 #define SDMMC_CLK GPIO_NUM_15
